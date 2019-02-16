@@ -1,4 +1,5 @@
 require "./base"
+require "../exceptions/page"
 
 module Amber::Controller
   class Error < Base
@@ -7,50 +8,51 @@ module Amber::Controller
       @context.response.content_type = content_type
     end
 
-    def not_found
-      response_format(@ex.message)
-    end
+    module Helpers
+      def bad_request
+        response_format
+      end
 
-    def internal_server_error
-      response_format("ERROR: #{internal_server_error_message}")
-    end
+      def forbidden
+        response_format
+      end
 
-    def forbidden
-      response_format(@ex.message)
-    end
+      def not_found
+        response_format
+      end
 
-    private def content_type
-      if context.request.headers["Accept"]?
-        request.headers["Accept"].split(",").first
-      else
-        "text/html"
+      def internal_server_error
+        response_format
+      end
+
+      private def content_type
+        if context.request.headers["Accept"]?
+          request.headers["Accept"].split(",").first
+        else
+          "text/plain"
+        end
+      end
+
+      private def response_format
+        case content_type
+        when "application/json"
+          {"error": @ex.message}.to_json
+        when "text/html"
+          html_response
+        else
+          @ex.message
+        end
+      end
+
+      private def html_response
+        if Amber.env.development?
+          Amber::Exceptions::Page.for_runtime_exception(context, @ex).to_s
+        else
+          "<html><body><pre>#{@ex.message}</pre></body></html>"
+        end
       end
     end
 
-    private def internal_server_error_message
-      # IMPORTANT: #inspect_with_backtrace will fail in some situations which breaks the tests.
-      # Even if you call @ex.callstack you'll notice that backtrace is nil.
-      # #backtrace? is supposed to be safe but it exceptions anyway.
-      # Please don't remove this without verifying that crystal core has been fixed first.
-      @ex.inspect_with_backtrace
-    rescue ex : IndexError
-      @ex.message
-    rescue ex
-      <<-ERROR
-      Original Error: #{@ex.message}
-      Error during 'inspect_with_backtrace': #{ex.message}
-      ERROR
-    end
-
-    private def response_format(message)
-      case content_type
-      when "application/json"
-        {"error": message}.to_json
-      when "text/html"
-        "<html><body><pre>#{message}</pre></body></html>"
-      else
-        message
-      end
-    end
+    include Amber::Controller::Error::Helpers
   end
 end

@@ -7,14 +7,17 @@ module Amber::Validators
     getter predicate : (String -> Bool)
     getter field : String
     getter value : String?
+    getter present : Bool
 
     def initialize(field : String | Symbol, @msg : String?, @allow_blank : Bool = true)
       @field = field.to_s
+      @present = false
       @predicate = ->(_s : String) { true }
     end
 
     def initialize(field : String | Symbol, @msg : String?, @allow_blank : Bool = true, &block : String -> Bool)
       @field = field.to_s
+      @present = false
       @predicate = block
     end
 
@@ -29,6 +32,7 @@ module Amber::Validators
 
     private def call_predicate(params : Amber::Router::Params)
       @value = params[@field]
+      @present = params.has_key?(@field)
       @predicate.call params[@field] unless @predicate.nil?
     end
 
@@ -127,7 +131,7 @@ module Amber::Validators
           @errors << rule.error
         end
 
-        @params[rule.field] = rule.value
+        @params[rule.field] = rule.value if rule.present
       end
 
       errors.empty?
@@ -145,6 +149,10 @@ module Amber::Validators
 
     def to_h
       @params
+    end
+
+    def to_unsafe_h
+      @raw_params.to_h
     end
   end
 end

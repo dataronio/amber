@@ -1,7 +1,7 @@
 class RegistrationController < ApplicationController
   def new
     <%= @name %> = <%= class_name %>.new
-    render("new.<%= @language %>")
+    render("new.<%= config.language %>")
   end
 
   def create
@@ -10,11 +10,11 @@ class RegistrationController < ApplicationController
 
     if <%= @name %>.valid? && <%= @name %>.save
       session[:<%= @name %>_id] = <%= @name %>.id
-      flash["success"] = "Created <%= class_name %> successfully."
+      flash[:success] = "Created <%= class_name %> successfully."
       redirect_to "/"
     else
-      flash["danger"] = "Could not create <%= class_name %>!"
-      render("new.<%= @language %>")
+      flash[:danger] = "Could not create <%= class_name %>!"
+      render("new.<%= config.language %>")
     end
   end
 

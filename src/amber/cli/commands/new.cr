@@ -8,7 +8,7 @@ module Amber::CLI
       class Options
         arg "name", desc: "name/path of project", required: true
         string "-d", desc: "Select the database database engine, can be one of: pg | mysql | sqlite", default: "pg"
-        bool "--deps", desc: "Installs project dependencies, this is the equivalent of running (shards update)", default: false
+        bool "--no-deps", desc: "Does not install dependencies, this avoids running shards update", default: false
         string "-m", desc: "Select the model type, can be one of: granite | crecto", default: "granite"
         bool "--no-color", desc: "Disable colored output", default: false
         string "-t", desc: "Selects the template engine language, can be one of: slang | ecr", default: "slang"
@@ -18,7 +18,7 @@ module Amber::CLI
 
       class Help
         header "Generates a new Amber project"
-        caption "# Generates a new Amber project"
+        caption "generates a new Amber project"
       end
 
       def run
@@ -33,11 +33,11 @@ module Amber::CLI
         name = File.basename(args.name)
 
         if (options.r? != nil)
-          template = Amber::Recipes::Recipe.new(name, "./#{args.name}", "#{options.r}")
+          generator = Amber::Recipes::Recipe.new(name, "./#{args.name}", "#{options.r}")
         else
-          template = Template.new(name, "./#{args.name}")
+          generator = Generators.new(name, "./#{args.name}")
         end
-        template.generate("app", options)
+        generator.generate("app", options)
 
         # Encrypts production.yml by default.
         cwd = Dir.current; Dir.cd(args.name)

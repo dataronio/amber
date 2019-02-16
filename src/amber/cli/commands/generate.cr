@@ -1,3 +1,5 @@
+require "../generators"
+
 module Amber::CLI
   class_property color = true
 
@@ -9,29 +11,25 @@ module Amber::CLI
         arg "type", desc: "scaffold, api, model, controller, migration, mailer, socket, channel, auth, error", required: true
         arg "name", desc: "name of resource", required: false
         arg_array "fields", desc: "user:reference name:string body:text age:integer published:bool"
-        bool "--no-color", desc: "Disable colored output", default: false
+        bool "--no-color", desc: "disable colored output", default: false
         help
       end
 
       class Help
         header "Generates application based on templates"
-        caption "# Generates application based on templates"
+        caption "Generates application based on templates"
       end
 
       def run
         CLI.toggle_colors(options.no_color?)
-        if args.type == "error"
-          template = Template.new("error", ".")
-        else
-          ensure_name_argument!
+        ensure_name_argument!
 
-          if recipe && Amber::Recipes::Recipe.can_generate?(args.type, recipe)
-            template = Amber::Recipes::Recipe.new(args.name, ".", recipe.as(String), args.fields)
-          else
-            template = Template.new(args.name, ".", args.fields)
-          end
+        if recipe && Amber::Recipes::Recipe.can_generate?(args.type, recipe)
+          generator = Amber::Recipes::Recipe.new(args.name, ".", recipe.as(String), args.fields)
+        else
+          generator = Generators.new(args.name, ".", args.fields)
         end
-        template.generate args.type
+        generator.generate args.type
       end
 
       def recipe
@@ -46,7 +44,7 @@ module Amber::CLI
       end
 
       class Help
-        caption "# Generate Amber classes"
+        caption "generate Amber classes"
       end
     end
   end
